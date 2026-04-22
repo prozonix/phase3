@@ -3,55 +3,207 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scratch Project Showcase</title>
+    <title>Spearview | Refresh Your Perspective</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google reCAPTCHA SDK -->
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <style>
-        /* Modern Dark Theme */
+        :root {
+            --mint-primary: #10b981;
+            --mint-dark: #065f46;
+            --mint-light: #ecfdf5;
+            --mint-accent: #d1fae5;
+        }
         body {
-            background-color: #121212;
-            color: #ffffff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f9f6;
+            height: 100vh;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
+            overflow: hidden;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
         }
-
-        header {
-            text-align: center;
-            margin-bottom: 20px;
+        .iframe-container {
+            flex-grow: 1;
+            background: white;
+            border-top: 2px solid var(--mint-accent);
+            position: relative;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
         }
-
-        h1 {
-            color: #855cd6; /* Scratch-style purple */
-            margin-bottom: 5px;
-        }
-
-        .project-container {
-            background-color: #1e1e1e;
-            padding: 15px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            border: 2px solid #333;
-        }
-
         iframe {
-            display: block;
-            border-radius: 8px;
+            width: 100%;
+            height: 100%;
+            border: none;
         }
-
-        footer {
-            margin-top: 20px;
-            font-size: 0.8rem;
-            color: #666;
+        .spearview-logo {
+            color: var(--mint-dark);
+            font-weight: 800;
+            letter-spacing: -0.025em;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+        .mint-gradient {
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+        }
+        .status-bar {
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        /* Custom styling for the reCAPTCHA container to keep it tidy */
+        #captcha-container {
+            transform: scale(0.8);
+            transform-origin: center center;
+            height: 78px;
+            display: flex;
+            align-items: center;
+        }
+        .btn-disabled {
+            background: #d1d5db !important;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        @media (min-width: 1024px) {
+            #captcha-container {
+                transform: scale(0.9);
+                transform-origin: left center;
+            }
         }
     </style>
 </head>
+<body>
 
-    <div class="project-container">
-        <iframe src="https://scratch.mit.edu/projects/1117354680/embed" allowtransparency="true" width="485" height="402" frameborder="0" scrolling="no" allowfullscreen></iframe>
-    </div>
+    <!-- Header / Navigation -->
+    <header class="bg-white border-b border-emerald-100 p-4 shadow-sm z-10">
+        <div class="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-4">
+            <!-- Branding -->
+            <div class="spearview-logo text-2xl pr-4 shrink-0" onclick="location.reload()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-emerald-500">
+                    <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+                </svg>
+                <span>Spearview</span>
+            </div>
 
+            <!-- Bot Verification Box -->
+            <div id="captcha-container" class="shrink-0 bg-emerald-50/50 rounded-xl px-2">
+                <div class="g-recaptcha" data-sitekey="6LeEQMUsAAAAAJHz_LZQ0smMFdkNgs0PT_21qfNi" data-callback="onCaptchaVerified" data-expired-callback="onCaptchaExpired"></div>
+            </div>
+
+            <!-- Input Group -->
+            <div class="flex-grow w-full flex gap-2">
+                <input 
+                    type="text" 
+                    id="urlInput" 
+                    placeholder="Verify to unlock URL bar..." 
+                    class="flex-grow px-4 py-2.5 bg-emerald-50 border-2 border-emerald-100 rounded-xl focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 focus:outline-none transition-all placeholder:text-emerald-300 text-emerald-900"
+                    onkeypress="if(event.key==='Enter' && !isBotVerified) showWarning(); else if(event.key==='Enter') loadUrl()"
+                >
+                <button 
+                    id="goButton"
+                    onclick="loadUrl()" 
+                    disabled
+                    class="btn-disabled text-white px-8 py-2.5 rounded-xl font-bold transition-all shadow-md active:scale-95"
+                >
+                    Go
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Viewer Area -->
+    <main class="iframe-container">
+        <div id="placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-emerald-200 p-6 text-center z-0">
+            <div id="botNotice" class="bg-emerald-50 p-8 rounded-full mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-20 w-20 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+            </div>
+            <h2 id="heroText" class="text-2xl font-bold text-emerald-800 mb-2">Security Shield Active</h2>
+            <p id="heroSubtext" class="text-emerald-600 max-w-sm">Complete the human verification in the header to enable browsing.</p>
+        </div>
+        <iframe id="viewer" src="" title="Spearview Content Frame"></iframe>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white px-6 py-3 border-t border-emerald-100 flex justify-between items-center z-10">
+        <div id="statusBar" class="status-bar text-emerald-400">
+            <span class="flex items-center gap-2 font-mono uppercase tracking-tighter">
+                <span id="statusIndicator" class="w-2 h-2 rounded-full bg-red-400"></span>
+                <span id="statusText">Awaiting Verification</span>
+            </span>
+        </div>
+        <div class="text-[10px] font-bold text-emerald-200 uppercase tracking-widest">Powered by Google reCAPTCHA • Spearview</div>
+    </footer>
+
+    <script>
+        let isBotVerified = false;
+        const urlInput = document.getElementById('urlInput');
+        const goButton = document.getElementById('goButton');
+        const viewer = document.getElementById('viewer');
+        const placeholder = document.getElementById('placeholder');
+        const statusBar = document.getElementById('statusBar');
+
+        // CAPTCHA CALLBACKS
+        function onCaptchaVerified(response) {
+            isBotVerified = true;
+            goButton.disabled = false;
+            goButton.classList.remove('btn-disabled');
+            goButton.classList.add('mint-gradient');
+            
+            document.getElementById('statusIndicator').className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
+            document.getElementById('statusText').innerText = "Verified: Ready";
+            document.getElementById('heroText').innerText = "Access Granted";
+            document.getElementById('heroSubtext').innerText = "Enter a URL above to start your fresh browsing session.";
+            urlInput.placeholder = "https://example.com";
+        }
+
+        function onCaptchaExpired() {
+            isBotVerified = false;
+            goButton.disabled = true;
+            goButton.classList.add('btn-disabled');
+            goButton.classList.remove('mint-gradient');
+            document.getElementById('statusIndicator').className = "w-2 h-2 rounded-full bg-red-400";
+            document.getElementById('statusText').innerText = "Session Expired";
+            urlInput.placeholder = "Verify to unlock URL bar...";
+        }
+
+        function loadUrl() {
+            if (!isBotVerified) {
+                showWarning();
+                return;
+            }
+
+            let url = urlInput.value.trim();
+            if (!url) return;
+            
+            if (!url.startsWith('http')) {
+                url = 'https://' + url;
+                urlInput.value = url;
+            }
+            
+            placeholder.style.display = 'none';
+            viewer.src = url;
+            updateStatus(`Live Stream: ${url}`, "text-emerald-600 font-bold");
+        }
+
+        function showWarning() {
+            document.getElementById('statusText').innerText = "Action Required: Check Box Above";
+            setTimeout(() => {
+                if(isBotVerified) return;
+                document.getElementById('statusText').innerText = "Awaiting Verification";
+            }, 2500);
+        }
+
+        function updateStatus(msg, colorClass) {
+            document.getElementById('statusText').innerText = msg;
+            document.getElementById('statusBar').className = `status-bar ${colorClass}`;
+        }
+
+        viewer.onload = function() {
+            if (viewer.src && viewer.src !== 'about:blank') {
+                updateStatus(`Viewing: ${viewer.src}`, "text-emerald-600 font-medium");
+            }
+        };
+    </script>
 </body>
 </html>
